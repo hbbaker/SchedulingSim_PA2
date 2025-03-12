@@ -6,12 +6,13 @@
 #include <signal.h>
 #include <sys/time.h>
 
-#define TIME_QUANTUM 1000 //in microseconds
+//#define TIME_QUANTUM 1000 //in microseconds
 pid_t pids[4];
 //int workloads[4] = {100000, 50000, 25000, 10000};
 int workloads[4] = {1000, 500, 250, 100};
 int remaining[4];
 struct timeval start_time[4], end_time[4];
+int TQ_RR, TQ_MLFQ;
 
 //Calculates the prime factorization of numbers
 void myfunction(int param) { //takes the input param variable
@@ -52,7 +53,7 @@ void AverageResponseTime(const char *algorithmName) {
 }
 
 //Function to execute Round Robin Scheduling
-void RR_Schedule() {
+void RR_Scheduling() {
     int processes = 4;
     for (int i = 0; i < 4; i++) {
         gettimeofday(&start_time[i], NULL);
@@ -61,9 +62,9 @@ void RR_Schedule() {
         for (int i = 0; i < 4; i++) {
             if (remaining[i] > 0) {
                 kill(pids[i], SIGCONT);
-                usleep(TIME_QUANTUM);
+                usleep(TQ_RR);
                 kill(pids[i], SIGSTOP);
-                remaining[i] -= TIME_QUANTUM;
+                remaining[i] -= TQ_RR;
                 if (waitpid(pids[i], NULL, WNOHANG) > 0) {
                     processes--;
                     gettimeofday(&end_time[i], NULL);
@@ -75,7 +76,7 @@ void RR_Schedule() {
 }
 
 // Function to compute Shortest Job First Scheduling Algorithm
-void SJF_Schedule() {
+void SJF_Scheduling() {
     int done = 0;
     for (int i = 0; i < 4; i++) {
         gettimeofday(&start_time[i], NULL);
@@ -99,15 +100,19 @@ void SJF_Schedule() {
 }
 
 int main() {
+    printf("Enter Time Quantum for Round Robin Scheduling: \n");
+    scanf("%d", &TQ_RR);
+    /*printf("Enter Time Quantum for Round Robin Scheduling: \n");
+    scanf("%d", &TQ_MLFQ);*/
+    
     create_processes();
     for (int i = 0; i < 4; i++) remaining[i] = workloads[i];
-    printf("Running Round Robin Scheduling Algorithm...\n");
-    RR_Schedule();
+    printf("Running Round Robin\n");
+    RR_Scheduling();
     for (int i = 0; i < 4; i++) remaining[i] = workloads[i];
-    printf("Running SJF Scheduling Algorithm...\n");
-    SJF_Schedule();
-    /*
-    for (int i = 0; i < 4; i++) remaining[i] = workloads[i];
+    printf("Running SJF\n");
+    SJF_Scheduling();
+    /*for (int i = 0; i < 4; i++) remaining[i] = workloads[i];
     printf("Running FCFS\n");
     FCFS_Schedule();
     for (int i = 0; i < 4; i++) remaining[i] = workloads[i];
