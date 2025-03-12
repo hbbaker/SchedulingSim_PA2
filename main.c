@@ -48,7 +48,7 @@ void printAverageResponseTime(const char *algorithmName) {
     for (int i = 0; i < 4; i++) {
         total_response_time += calculateResponseTime(start_time[i], end_time[i]);
     }
-    printf("%s - Average Response Time: %lld us\n", algorithmName, total_response_time / 4);
+    printf("%s - Average Response Time: %lld us\n\n", algorithmName, total_response_time / 4);
 }
 
 //Function to execute Round Robin Scheduling
