@@ -81,6 +81,7 @@ void SJF_Scheduling() {
     for (int i = 0; i < 4; i++) {
         gettimeofday(&start_time[i], NULL);
     }
+    //Compares each remaining workload size and allows the shortest remaining to execute first
     while (done < 4) {
         int min = -1;
         for (int i = 0; i < 4; i++) {
@@ -99,24 +100,42 @@ void SJF_Scheduling() {
     AverageResponseTime("SJF");
 }
 
+// Function to compute First Come First Serve Scheduling Algorithm
+void FCFS_Scheduling() {
+    for (int i = 0; i < 4; i++) {
+        gettimeofday(&start_time[i], NULL);
+    }
+    //Loops through each workload and waits for each to complete prior to terminating
+    for (int i = 0; i < 4; i++) { 
+        kill(pids[i], SIGCONT);
+        waitpid(pids[i], NULL, 0);
+        gettimeofday(&end_time[i], NULL);
+    }
+    AverageResponseTime("FCFS");
+}
+
 int main() {
+    //Prompts user to input Time Quantums for RR and MLFQ Scheduling
     printf("Enter Time Quantum for Round Robin Scheduling: \n");
     scanf("%d", &TQ_RR);
-    /*printf("Enter Time Quantum for Round Robin Scheduling: \n");
+    /*printf("Enter Time Quantum for MLFQ Scheduling: \n");
     scanf("%d", &TQ_MLFQ);*/
     
     create_processes();
     for (int i = 0; i < 4; i++) remaining[i] = workloads[i];
     printf("Running Round Robin\n");
     RR_Scheduling();
+    
     for (int i = 0; i < 4; i++) remaining[i] = workloads[i];
     printf("Running SJF\n");
     SJF_Scheduling();
-    /*for (int i = 0; i < 4; i++) remaining[i] = workloads[i];
-    printf("Running FCFS\n");
-    FCFS_Schedule();
+    
     for (int i = 0; i < 4; i++) remaining[i] = workloads[i];
+    printf("Running FCFS\n");
+    FCFS_Scheduling();
+    
+    /*for (int i = 0; i < 4; i++) remaining[i] = workloads[i];
     printf("Running MLFQ\n");
-    MLFQ_Schedule();*/
+    MLFQ_Scheduling();*/
     return 0;
 }
