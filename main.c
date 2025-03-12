@@ -43,7 +43,7 @@ long long calculateResponseTime(struct timeval start, struct timeval end) {
 }
 
 //Calculate average response time per function
-void printAverageResponseTime(const char *algorithmName) {
+void AverageResponseTime(const char *algorithmName) {
     long long total_response_time = 0;
     for (int i = 0; i < 4; i++) {
         total_response_time += calculateResponseTime(start_time[i], end_time[i]);
@@ -52,7 +52,7 @@ void printAverageResponseTime(const char *algorithmName) {
 }
 
 //Function to execute Round Robin Scheduling
-void schedule_round_robin() {
+void RR_Schedule() {
     int processes = 4;
     for (int i = 0; i < 4; i++) {
         gettimeofday(&start_time[i], NULL);
@@ -71,11 +71,11 @@ void schedule_round_robin() {
             }
         }
     }
-    printAverageResponseTime("Round Robin");
+    AverageResponseTime("Round Robin");
 }
 
 // Function to compute Shortest Job First Scheduling Algorithm
-void schedule_sjf() {
+void SJF_Schedule() {
     int done = 0;
     for (int i = 0; i < 4; i++) {
         gettimeofday(&start_time[i], NULL);
@@ -95,16 +95,23 @@ void schedule_sjf() {
             gettimeofday(&end_time[min], NULL);
         }
     }
-    printAverageResponseTime("SJF");
+    AverageResponseTime("SJF");
 }
 
 int main() {
     create_processes();
     for (int i = 0; i < 4; i++) remaining[i] = workloads[i];
     printf("Running Round Robin Scheduling Algorithm...\n");
-    schedule_round_robin();
+    RR_Schedule();
     for (int i = 0; i < 4; i++) remaining[i] = workloads[i];
     printf("Running SJF Scheduling Algorithm...\n");
-    schedule_sjf();
+    SJF_Schedule();
+    /*
+    for (int i = 0; i < 4; i++) remaining[i] = workloads[i];
+    printf("Running FCFS\n");
+    FCFS_Schedule();
+    for (int i = 0; i < 4; i++) remaining[i] = workloads[i];
+    printf("Running MLFQ\n");
+    MLFQ_Schedule();*/
     return 0;
 }
