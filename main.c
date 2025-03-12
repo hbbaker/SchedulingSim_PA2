@@ -8,11 +8,11 @@
 
 //#define TIME_QUANTUM 1000 //in microseconds
 pid_t pids[4];
-//int workloads[4] = {100000, 50000, 25000, 10000};
-int workloads[4] = {1000, 500, 250, 100};
-int remaining[4];
-struct timeval start_time[4], end_time[4];
-int TQ_RR, TQ_MLFQ;
+//int workloads[4] = {100000, 50000, 25000, 10000}; //Experiment workloads
+int workloads[4] = {1000, 500, 250, 100}; //debug sample workloads
+int remaining[4]; //remaining workloads
+struct timeval start_time[4], end_time[4]; //time tracking variables for average
+int TQ_RR, TQ_MLFQ; //user input for TIME_QUANTUM for RR and MLFQ in us
 
 //Calculates the prime factorization of numbers
 void myfunction(int param) { //takes the input param variable
