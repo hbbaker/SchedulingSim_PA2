@@ -8,12 +8,10 @@
 
 #define TIME_QUANTUM 1000 //in microseconds
 pid_t pids[4];
-int workloads[4] = {100000, 50000, 25000, 10000};
+//int workloads[4] = {100000, 50000, 25000, 10000};
+int workloads[4] = {1000, 500, 250, 100};
 int remaining[4];
-struct {
-timeval start_time[4]; 
-end_time[4];
-};
+struct timeval start_time[4], end_time[4];
 
 //Calculates the prime factorization of numbers
 void myfunction(int param) { //takes the input param variable
@@ -103,10 +101,10 @@ void schedule_sjf() {
 int main() {
     create_processes();
     for (int i = 0; i < 4; i++) remaining[i] = workloads[i];
-    printf("Running Round Robin\n");
+    printf("Running Round Robin Scheduling Algorithm...\n");
     schedule_round_robin();
     for (int i = 0; i < 4; i++) remaining[i] = workloads[i];
-    printf("Running SJF\n");
+    printf("Running SJF Scheduling Algorithm...\n");
     schedule_sjf();
     return 0;
 }
