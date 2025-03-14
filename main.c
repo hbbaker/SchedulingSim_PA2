@@ -8,23 +8,25 @@
 
 //#define TIME_QUANTUM 1000 //in microseconds
 pid_t pids[4];
-//int workloads[4] = {100000, 50000, 25000, 10000}; //Experiment workloads
-int workloads[4] = {1000, 500, 250, 100}; //debug sample workloads
+int workloads[4] = {100000, 50000, 25000, 10000}; //Experiment workloads
+//int workloads[4] = {1000, 500, 250, 100}; //debug sample workloads
 int remaining[4]; //remaining workloads
 struct timeval start_time[4], end_time[4]; //time tracking variables for average
 int TQ_RR, TQ_MLFQ; //user input for TIME_QUANTUM for RR and MLFQ in us
 
 //Calculates the prime factorization of numbers
-void myfunction(int param) { //takes the input param variable
-    for (int i = 2; i <= param; i++) {
-        int num = i, factor = 2;
-        while (num > 1) {
-            while (num % factor == 0) {
-                num /= factor;
-            }
-            factor++;
+void myfunction(int param, int process_id) {
+    int num = param, factor = 2;
+    printf("Process %d: Prime factors of %d: ", process_id, param);
+    while (num > 1) {
+        while (num % factor == 0) {
+            printf("%d ", factor);
+            num /= factor;
         }
+        factor++;
     }
+    printf("\n");
+    //fflush(stdout); //force output
 }
 
 //Creates four child processes per workload
@@ -32,7 +34,7 @@ void create_processes() {
     for (int i = 0; i < 4; i++) {
         if ((pids[i] = fork()) == 0) {
             kill(getpid(), SIGSTOP);
-            myfunction(workloads[i]);
+            myfunction(workloads[i], i); // Pass process_id
             exit(0);
         }
     }
@@ -62,12 +64,14 @@ void RR_Scheduling() {
         for (int i = 0; i < 4; i++) {
             if (remaining[i] > 0) {
                 kill(pids[i], SIGCONT);
-                usleep(TQ_RR);
+                int slice = (remaining[i] < TQ_RR) ? remaining[i] : TQ_RR;
+                usleep(slice);
                 kill(pids[i], SIGSTOP);
-                remaining[i] -= TQ_RR;
-                if (waitpid(pids[i], NULL, WNOHANG) > 0) {
+                remaining[i] -= slice;
+                if (remaining[i] <= 0) {
                     processes--;
                     gettimeofday(&end_time[i], NULL);
+                    waitpid(pids[i], NULL, 0); //wait for process to truly finish.
                 }
             }
         }
@@ -81,7 +85,6 @@ void SJF_Scheduling() {
     for (int i = 0; i < 4; i++) {
         gettimeofday(&start_time[i], NULL);
     }
-    //Compares each remaining workload size and allows the shortest remaining to execute first
     while (done < 4) {
         int min = -1;
         for (int i = 0; i < 4; i++) {
@@ -95,6 +98,7 @@ void SJF_Scheduling() {
             remaining[min] = 0;
             done++;
             gettimeofday(&end_time[min], NULL);
+            printf("Process %d completed (SJF)\n", min); //print completion order.
         }
     }
     AverageResponseTime("SJF");
@@ -105,8 +109,7 @@ void FCFS_Scheduling() {
     for (int i = 0; i < 4; i++) {
         gettimeofday(&start_time[i], NULL);
     }
-    //Loops through each workload and waits for each to complete prior to terminating
-    for (int i = 0; i < 4; i++) { 
+    for (int i = 0; i < 4; i++) {
         kill(pids[i], SIGCONT);
         waitpid(pids[i], NULL, 0);
         gettimeofday(&end_time[i], NULL);
@@ -126,15 +129,27 @@ int main() {
     printf("Running Round Robin\n");
     RR_Scheduling();
     
+    printf("Press Enter to run SJF...\n");
+    getchar();
+    while (getchar() != '\n');
+    
     for (int i = 0; i < 4; i++) remaining[i] = workloads[i];
     printf("Running SJF\n");
     SJF_Scheduling();
     
+    printf("Press Enter to run FCFS...\n");
+    getchar();
+    while (getchar() != '\n');
+    
     for (int i = 0; i < 4; i++) remaining[i] = workloads[i];
     printf("Running FCFS\n");
     FCFS_Scheduling();
+
+    /*printf("Press Enter to run MLFQ...\n");
+    getchar();
+    while (getchar() != '\n');
     
-    /*for (int i = 0; i < 4; i++) remaining[i] = workloads[i];
+    for (int i = 0; i < 4; i++) remaining[i] = workloads[i];
     printf("Running MLFQ\n");
     MLFQ_Scheduling();*/
     return 0;
