@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include "process.h"
 
 #define MAX_SIZE 4
 
@@ -7,7 +8,7 @@ typedef struct
     int size;
     int front;
     int rear;
-    int pids[MAX_SIZE];
+    Process *pids[MAX_SIZE];
 } Queue;
 
 void initQueue(Queue *queue)
@@ -32,7 +33,7 @@ int isEmpty(Queue *queue)
     return queue->size == 0;
 }
 
-int enqueue(Queue *queue, int pid)
+int enqueue(Queue *queue, Process *pid)
 {
     if (isFull(queue))
     {
@@ -51,14 +52,14 @@ int enqueue(Queue *queue, int pid)
     return 0;
 }
 
-int dequeue(Queue *queue)
+Process *dequeue(Queue *queue)
 {
     if (isEmpty(queue))
     {
         return -1;
     }
 
-    int dequeuedValue = queue->pids[queue->front];
+    Process *dequeuedValue = queue->pids[queue->front];
     queue->front = (queue->front + 1) % MAX_SIZE;
     queue->size--;
 

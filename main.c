@@ -6,14 +6,17 @@
 #include <signal.h>
 #include <sys/time.h>
 #include "queue.h"
+#include "process.h"
 
 // #define TIME_QUANTUM 1000 //in microseconds
 pid_t pids[4];
+
 int workloads[4] = {100000, 50000, 25000, 10000}; // Experiment workloads for PA2
 // int workloads[4] = {1000, 500, 250, 100}; //Sample workloads for debugging
 int remaining[4];                          // remaining workloads
 struct timeval start_time[4], end_time[4]; // time tracking variables for running average
 int TQ_RR, TQ_MLFQ;                        // user input for TIME_QUANTUM for RR and MLFQ in microseconds
+Process *processes[4];
 
 // Calculates the prime factorization of numbers
 void myfunction(int param)
@@ -50,6 +53,12 @@ void create_processes()
             myfunction(workloads[i]); // Pass process_id
             exit(0);
         }
+    }
+
+    for (int i = 0; i < 4; i++)
+    {
+        initProcess(processes[i], pids[i]);
+        printf("PID%d: %d\n", i, processes[i]->pid);
     }
 }
 
@@ -184,17 +193,14 @@ void FCFS_Scheduling()
 void MLFQ_Scheduling()
 {
     int num_processes = 4;
-    int queue[4] = {0, 0, 0, 0}; // Track which queue each process is in
-    int running[4] = {1, 1, 1, 1};
-    int tq = TQ_MLFQ;    // Time Quantum for MLFQ RR in L1
-    int queue_level = 0; // Number of processes in L2
-    int processNumber = 0;
+    int tq = TQ_MLFQ; // Time Quantum for MLFQ RR in L1
+    Process active_process;
     Queue RR_queue;
     Queue FCFS_queue;
 
     for (int i = 0; i < num_processes; i++)
     {
-        enqueue(&RR_queue, pids[i]);
+        enqueue(&RR_queue, processes[i]->pid);
     }
 
     while (num_processes > 0)
@@ -202,29 +208,30 @@ void MLFQ_Scheduling()
         // L1: Round Robin
         while (getSize(&RR_queue) > 0)
         {
-            int activePID = dequeue(&RR_queue);
+            active_process = *dequeue(&RR_queue);
 
-            gettimeofday(&start_time[processNumber], NULL); // Start Timer
+            gettimeofday(active_process.p_start, NULL); // Start Timer
 
             // Run for Fixed TQ
-            kill(activePID, SIGCONT);
+            kill(active_process.pid, SIGCONT);
             usleep(tq);
-            kill(activePID, SIGSTOP);
+            kill(active_process.pid, SIGSTOP);
+
+            int running;
 
             // Check if Process is Completed
-            waitpid(activePID, &running[processNumber], WNOHANG);
+            waitpid(active_process.pid, &running, WNOHANG);
 
             // If Complete, set the end time for that process and lower num_processes
-            if (running[processNumber] == 0)
+            if (running == 0)
             {
                 num_processes--;
-                gettimeofday(&end_time[processNumber], NULL);
+                gettimeofday(active_process.p_end, NULL);
             }
             else
             {
-                enqueue(&FCFS_queue, activePID);
+                enqueue(&FCFS_queue, &active_process);
             }
-            processNumber++;
         }
 
         // L2: First Come, First Serve
@@ -233,11 +240,10 @@ void MLFQ_Scheduling()
         {
             int activePID = dequeue(&FCFS_queue);
 
-            kill(pids[i], SIGCONT);
-            waitpid(pids[i], NULL, 0);
+            kill(activePID, SIGCONT);
+            waitpid(activePID, NULL, 0);
             gettimeofday(&end_time[i], NULL);
             num_processes--;
-            queue_level--;
         }
     }
     AverageResponseTime("MLFQ");
