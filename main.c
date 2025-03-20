@@ -210,7 +210,6 @@ void MLFQ_Scheduling()
     int num_processes = 4;
     int tq = TQ_MLFQ; // Time Quantum for MLFQ RR in L1
     Process active_process;
-    Process active_process_fcfs;
     Queue RR_queue;
     Queue FCFS_queue;
 
@@ -223,12 +222,6 @@ void MLFQ_Scheduling()
         printf("Enqueueing PID: %d...\n", processes[i].pid);
         enqueue(&RR_queue, &processes[i]); // CHECK THIS
         // printf("RRQueue @ %d PID: %d\n", i, RR_queue.processes[RR_queue.rear]->pid);
-    }
-
-    for (int i = 0; i < getSize(&RR_queue); i++)
-    {
-        printf("RRQueue before running...");
-        printf("RRQueue @ %d PID: %d\n", i, RR_queue.processes[RR_queue.rear]->pid);
     }
 
     printf("QUEUED FOR RR RRQueue Size: %d, FCFSQueue Size: %d\n", getSize(&RR_queue), getSize(&FCFS_queue));
@@ -305,46 +298,46 @@ int main()
     create_processes();
     for (int i = 0; i < 4; i++)
         remaining[i] = workloads[i];
-    printf("Running Round Robin\n");
+    printf("Running Round Robin...\n");
     RR_Scheduling();
     fflush(stdout);
 
-    printf("Press Enter to continue to SJF...\n");
+    /* printf("Press Enter to continue to SJF...\n");
     getchar();
     while (getchar() != '\n')
-        ;
+        ; */
 
     // SJF
     create_processes();
     for (int i = 0; i < 4; i++)
         remaining[i] = workloads[i];
-    printf("Running SJF\n");
+    printf("Running SJF...\n");
     SJF_Scheduling();
     fflush(stdout);
 
-    printf("Press Enter to continue to FCFS...\n");
+    /* printf("Press Enter to continue to FCFS...\n");
     getchar();
     while (getchar() != '\n')
-        ;
+        ; */
 
     // FCFS
     create_processes();
     for (int i = 0; i < 4; i++)
         remaining[i] = workloads[i];
-    printf("Running FCFS\n");
+    printf("Running FCFS...\n");
     FCFS_Scheduling();
     fflush(stdout);
 
-    printf("Press Enter to continue to MLFQ...\n");
+    /* printf("Press Enter to continue to MLFQ...\n");
     getchar();
     while (getchar() != '\n')
-        ;
+        ; */
 
     // MLFQ
     create_processes();
     for (int i = 0; i < 4; i++)
         remaining[i] = workloads[i];
-    printf("Running MLFQ\n");
+    printf("Running MLFQ...\n");
     MLFQ_Scheduling();
     fflush(stdout);
     return 0;
