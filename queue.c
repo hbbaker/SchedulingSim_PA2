@@ -50,3 +50,23 @@ int enqueue(Queue *queue, int pid)
 
     return 0;
 }
+
+int dequeue(Queue *queue)
+{
+    if (isEmpty(queue))
+    {
+        return -1;
+    }
+
+    int dequeuedValue = queue->pids[queue->front];
+    queue->front = (queue->front + 1) % MAX_SIZE;
+    queue->size--;
+
+    if (isEmpty(queue))
+    {
+        queue->front = -1;
+        queue->rear = -1;
+    }
+
+    return dequeuedValue;
+}
