@@ -1,4 +1,7 @@
-mkdir -p build2
-cd Desktop/build2
-gcc Desktop/PA2/src/main.c -o PA2-build2 
+#!/bin/bash
+
+mkdir -p ./build
+cd ./build
+
+gcc ../process.c ../queue.c ../main.c -o PA2-build 
 
