@@ -2,5 +2,6 @@
 
 mkdir -p ./build
 cd ./build
-gcc ../main.c -o PA2-build 
+
+gcc ../process.c ../queue.c ../main.c -o PA2-build 
 

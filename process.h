@@ -2,24 +2,27 @@
 #define PROCESS_H
 
 #include <stdlib.h>
+#include <sys/time.h>
 
 typedef struct
 {
-    int pid;
-    int p_start;
-    int p_end;
+    pid_t pid;
+    struct timeval p_start;
+    struct timeval p_end;
 } Process;
 
-void *initProcess(Process *process, int pid);
+void *initProcess(Process *process, int id);
 
-void *set_p_start(Process *process, int start_time);
+void *p_start(Process *process);
 
-void *set_p_end(Process *process, int end_time);
+void *p_end(Process *process);
 
 int get_pid(Process *process);
 
-int get_p_start(Process *process);
+struct timeval get_p_start(Process *process);
 
-int get_p_end(Process *process);
+struct timeval get_p_end(Process *process);
+
+Process *deep_copy(Process *src);
 
 #endif

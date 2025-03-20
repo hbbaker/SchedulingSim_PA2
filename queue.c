@@ -8,7 +8,7 @@ typedef struct
     int size;
     int front;
     int rear;
-    Process *pids[MAX_SIZE];
+    Process *processes[MAX_SIZE];
 } Queue;
 
 void initQueue(Queue *queue)
@@ -35,8 +35,15 @@ int isEmpty(Queue *queue)
 
 int enqueue(Queue *queue, Process *pid)
 {
+    Process *newProcess = malloc(sizeof(Process));
+    if (!newProcess)
+    {
+        free(newProcess);
+        return -1;
+    }
     if (isFull(queue))
     {
+        free(newProcess);
         return -1;
     }
 
@@ -46,7 +53,7 @@ int enqueue(Queue *queue, Process *pid)
     }
 
     queue->rear = (queue->rear + 1) % MAX_SIZE;
-    queue->pids[queue->rear] = pid;
+    queue->processes[queue->rear] = deep_copy(pid);
     queue->size++;
 
     return 0;
@@ -56,10 +63,10 @@ Process *dequeue(Queue *queue)
 {
     if (isEmpty(queue))
     {
-        return -1;
+        return NULL;
     }
 
-    Process *dequeuedValue = queue->pids[queue->front];
+    Process *dequeuedValue = queue->processes[queue->front];
     queue->front = (queue->front + 1) % MAX_SIZE;
     queue->size--;
 
@@ -70,4 +77,13 @@ Process *dequeue(Queue *queue)
     }
 
     return dequeuedValue;
+}
+
+void free_queue(Queue *queue)
+{
+    while (queue->size > 0)
+    {
+        Process *removed = dequeue(queue);
+        free(removed);
+    }
 }

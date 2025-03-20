@@ -11,7 +11,7 @@ typedef struct
     int size;
     int front;
     int rear;
-    int pids[MAX_SIZE];
+    Process *processes[MAX_SIZE];
 } Queue;
 
 void *initQueue(Queue *queue);
@@ -25,5 +25,7 @@ int isEmpty(Queue *queue);
 int enqueue(Queue *queue, Process *pid);
 
 Process *dequeue(Queue *queue);
+
+void *free_queue(Queue *queue);
 
 #endif
