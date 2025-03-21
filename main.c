@@ -11,12 +11,14 @@
 // #define TIME_QUANTUM 1000 //in microseconds
 pid_t pids[4];
 
-int workloads[4] = {100000, 50000, 25000, 10000}; // Experiment workloads for PA2
+// int workloads[4] = {100000, 50000, 25000, 10000}; // Experiment workloads for PA2
+int workloads[4] = {100000, 100000, 100000, 100000}; // Experiment workloads for PA2 3b
 // int workloads[4] = {1000, 500, 250, 100};  // Sample workloads for debugging
 int remaining[4];                          // remaining workloads
 struct timeval start_time[4], end_time[4]; // time tracking variables for running average
 int TQ_RR, TQ_MLFQ;                        // user input for TIME_QUANTUM for RR and MLFQ in microseconds
 Process processes[4];
+long long overhead[4];
 
 // Calculates the prime factorization of numbers
 void myfunction(int param)
@@ -51,16 +53,16 @@ void create_processes()
 
         if (pids[i] == 0)
         {
-            printf("Killing PID: %d with workload %d\n", getpid(), workloads[i]);
+            // printf("Killing PID: %d with workload %d\n", getpid(), workloads[i]);
             kill(getpid(), SIGSTOP);
-            printf("Running PID: %d with workload %d\n", getpid(), workloads[i]);
+            // printf("Running PID: %d with workload %d\n", getpid(), workloads[i]);
             myfunction(workloads[i]); // Pass process_id
-            printf("Finished PID: %d with workload %d\n", getpid(), workloads[i]);
+            // printf("Finished PID: %d with workload %d\n", getpid(), workloads[i]);
             fflush(stdout);
             exit(0);
         }
         initProcess(&processes[i], pids[i]);
-        printf("PID%d: %d\n", i, get_pid(&processes[i]));
+        // printf("PID%d: %d\n", i, get_pid(&processes[i]));
     }
 
     for (int i = 0; i < 4; i++)
@@ -84,17 +86,22 @@ void AverageResponseTime(const char *algorithmName)
     {
         total_time += calculateResponseTime(start_time[i], end_time[i]);
     }
-    printf("%s - Average Response Time: %lld us\n\n", algorithmName, total_time / 4);
+    printf("%s - Average Response Time: %lld us\n", algorithmName, total_time / 4);
 }
 
 // Function to execute Round Robin Scheduling
 void RR_Scheduling()
 {
     int num_processes = 4;
+    struct timeval start;
+    struct timeval end;
+
     for (int i = 0; i < 4; i++)
     {
         gettimeofday(&start_time[i], NULL);
     }
+
+    int firstRun = 1;
 
     int running1 = 1;
     int running2 = 1;
@@ -104,30 +111,51 @@ void RR_Scheduling()
     {
         if (running1 > 0)
         {
+            if (firstRun == 1)
+            {
+                firstRun = 0;
+            }
+            else
+            {
+                gettimeofday(&end, NULL);
+                overhead[0] += calculateResponseTime(start, end);
+            }
+
             kill(pids[0], SIGCONT);
             usleep(TQ_RR);
             kill(pids[0], SIGSTOP);
+            gettimeofday(&start, NULL);
+
             // printf("Switching");
         }
         if (running2 > 0)
         {
+            gettimeofday(&end, NULL);
+            overhead[0] += calculateResponseTime(start, end);
             kill(pids[1], SIGCONT);
             usleep(TQ_RR);
             kill(pids[1], SIGSTOP);
+            gettimeofday(&start, NULL);
             // printf("Switching");
         }
         if (running3 > 0)
         {
+            gettimeofday(&end, NULL);
+            overhead[0] += calculateResponseTime(start, end);
             kill(pids[2], SIGCONT);
             usleep(TQ_RR);
             kill(pids[2], SIGSTOP);
+            gettimeofday(&start, NULL);
             // printf("Switching");
         }
         if (running4 > 0)
         {
+            gettimeofday(&end, NULL);
+            overhead[0] += calculateResponseTime(start, end);
             kill(pids[3], SIGCONT);
             usleep(TQ_RR);
             kill(pids[3], SIGSTOP);
+            gettimeofday(&start, NULL);
             // printf("Switching");
         }
         waitpid(pids[0], &running1, WNOHANG);
@@ -152,12 +180,18 @@ void RR_Scheduling()
         }
     }
     AverageResponseTime("Round Robin");
+    printf("Total Overhead Time: %lld us\n\n", overhead[0]);
 }
 
 // Function to compute Shortest Job First Scheduling Algorithm
 void SJF_Scheduling()
 {
     int done = 0;
+    struct timeval start;
+    struct timeval end;
+
+    gettimeofday(&start, NULL);
+
     for (int i = 0; i < 4; i++)
     {
         gettimeofday(&start_time[i], NULL);
@@ -165,7 +199,7 @@ void SJF_Scheduling()
     while (done < 4)
     {
         int min = -1;
-        printf("Min = %d\n", min);
+        // printf("Min = %d\n", min);
         for (int i = 0; i < 4; i++)
         {
             if (remaining[i] > 0 && (min == -1 || remaining[i] < remaining[min]))
@@ -173,12 +207,15 @@ void SJF_Scheduling()
                 min = i;
             }
         }
-        printf("Min Before running = %d\n", min);
+        // printf("Min Before running = %d\n", min);
         if (min > -1)
         {
             // printf("Running PID: %d\n", pids[min]);
             kill(pids[min], SIGCONT);
+            gettimeofday(&end, NULL);
+            overhead[1] += calculateResponseTime(start, end);
             waitpid(pids[min], NULL, 0);
+            gettimeofday(&start, NULL);
             remaining[min] = 0;
             done++;
             gettimeofday(&end_time[min], NULL);
@@ -186,11 +223,17 @@ void SJF_Scheduling()
         }
     }
     AverageResponseTime("SJF");
+    printf("Total Overhead Time: %lld us\n\n", overhead[1]);
 }
 
 // Function to compute First Come First Serve Scheduling Algorithm
 void FCFS_Scheduling()
 {
+    struct timeval start;
+    struct timeval end;
+
+    gettimeofday(&start, NULL);
+
     for (int i = 0; i < 4; i++)
     {
         gettimeofday(&start_time[i], NULL);
@@ -198,10 +241,14 @@ void FCFS_Scheduling()
     for (int i = 0; i < 4; i++)
     {
         kill(pids[i], SIGCONT);
+        gettimeofday(&end, NULL);
+        overhead[2] += calculateResponseTime(start, end);
         waitpid(pids[i], NULL, 0);
+        gettimeofday(&start, NULL);
         gettimeofday(&end_time[i], NULL);
     }
     AverageResponseTime("FCFS");
+    printf("Total Overhead Time: %lld us\n\n", overhead[2]);
 }
 
 // Function to compute Multi-Level Feedback Queue Scheduling Algorithm
@@ -215,35 +262,43 @@ void MLFQ_Scheduling()
     Queue FCFS_queue;
     long long runtimes[4];
 
+    struct timeval start;
+    struct timeval end;
+
+    gettimeofday(&start, NULL);
+
     initQueue(&RR_queue);
     initQueue(&FCFS_queue);
-    printf("INIT RRQueue Size: %d, FCFSQueue Size: %d\n", getSize(&RR_queue), getSize(&FCFS_queue));
+    // printf("INIT RRQueue Size: %d, FCFSQueue Size: %d\n", getSize(&RR_queue), getSize(&FCFS_queue));
 
     for (int i = 0; i < num_processes; i++)
     {
-        printf("Enqueueing PID: %d...\n", processes[i].pid);
+        // printf("Enqueueing PID: %d...\n", processes[i].pid);
         enqueue(&RR_queue, &processes[i]); // CHECK THIS
         // printf("RRQueue @ %d PID: %d\n", i, RR_queue.processes[RR_queue.rear]->pid);
     }
 
-    printf("QUEUED FOR RR RRQueue Size: %d, FCFSQueue Size: %d\n", getSize(&RR_queue), getSize(&FCFS_queue));
+    // printf("QUEUED FOR RR RRQueue Size: %d, FCFSQueue Size: %d\n", getSize(&RR_queue), getSize(&FCFS_queue));
 
     while (num_processes > 0)
     {
-        printf("RR...\n");
+        // printf("RR...\n");
         // L1: Round Robin
         while (!isEmpty(&RR_queue))
         {
             active_process = *dequeue(&RR_queue);
-            printf("Dequeueing PID: %d\n", active_process.pid);
-            printf("Queue size: %d\n", getSize(&RR_queue));
+            // printf("Dequeueing PID: %d\n", active_process.pid);
+            // printf("Queue size: %d\n", getSize(&RR_queue));
 
             gettimeofday(&active_process.p_start, NULL); // Start Timer
 
             // Run for Fixed TQ
             kill(active_process.pid, SIGCONT);
+            gettimeofday(&end, NULL);
+            overhead[3] += calculateResponseTime(start, end);
             usleep(tq);
             kill(active_process.pid, SIGSTOP);
+            gettimeofday(&start, NULL);
 
             int status;
             pid_t result;
@@ -264,22 +319,25 @@ void MLFQ_Scheduling()
             {
                 Process *new_proc = deep_copy(&active_process);
                 enqueue(&FCFS_queue, new_proc);
-                printf("Enqueueing PID to FCFS: %d\n", FCFS_queue.processes[FCFS_queue.rear]->pid);
+                // printf("Enqueueing PID to FCFS: %d\n", FCFS_queue.processes[FCFS_queue.rear]->pid);
             }
         }
 
-        printf("QUEUED FOR FCFS RRQueue Size: %d, FCFSQueue Size: %d\n", getSize(&RR_queue), getSize(&FCFS_queue));
+        // printf("QUEUED FOR FCFS RRQueue Size: %d, FCFSQueue Size: %d\n", getSize(&RR_queue), getSize(&FCFS_queue));
 
-        printf("FCFS...\n");
+        // printf("FCFS...\n");
         while (!isEmpty(&FCFS_queue))
         {
-            printf("Dequeueing PID from FCFS: %d\n", FCFS_queue.processes[FCFS_queue.front]->pid);
+            // printf("Dequeueing PID from FCFS: %d\n", FCFS_queue.processes[FCFS_queue.front]->pid);
             active_process = *dequeue(&FCFS_queue);
-            printf("Active process PID: %d\n", active_process.pid);
-            printf("FCFS Queue size: %d\n", getSize(&FCFS_queue));
+            // printf("Active process PID: %d\n", active_process.pid);
+            // printf("FCFS Queue size: %d\n", getSize(&FCFS_queue));
 
             kill(active_process.pid, SIGCONT);
+            gettimeofday(&end, NULL);
+            overhead[3] += calculateResponseTime(start, end);
             waitpid(active_process.pid, NULL, 0);
+            gettimeofday(&start, NULL);
             gettimeofday(&active_process.p_end, NULL);
 
             num_processes--;
@@ -297,16 +355,21 @@ void MLFQ_Scheduling()
     }
 
     printf("MLFQ - Average Response Time: %lld us\n", total_time / 4);
+    printf("Total Overhead Time: %lld us\n\n", overhead[3]);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
-    // Prompts user to input Time Quantums for RR Scheduling
+    /* // Prompts user to input Time Quantums for RR Scheduling
     printf("Enter Time Quantum for Round Robin Scheduling: \n");
     scanf("%d", &TQ_RR);
     // Prompts user to input Time Quantums for MLFQ Scheduling
     printf("Enter Time Quantum for MLFQ Scheduling: \n");
-    scanf("%d", &TQ_MLFQ);
+    scanf("%d", &TQ_MLFQ); */
+
+    TQ_RR = atoi(argv[1]);
+    TQ_MLFQ = atoi(argv[2]);
+    printf("Running Schedules with TQ RR: %d, TQ MLFQ: %d\n", TQ_RR, TQ_MLFQ);
 
     // RR
     create_processes();
