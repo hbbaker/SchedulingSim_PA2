@@ -208,10 +208,12 @@ void FCFS_Scheduling()
 void MLFQ_Scheduling()
 {
     int num_processes = 4;
+    int completed = 0;
     int tq = TQ_MLFQ; // Time Quantum for MLFQ RR in L1
     Process active_process;
     Queue RR_queue;
     Queue FCFS_queue;
+    long long runtimes[4];
 
     initQueue(&RR_queue);
     initQueue(&FCFS_queue);
@@ -254,6 +256,9 @@ void MLFQ_Scheduling()
             {
                 num_processes--;
                 gettimeofday(&active_process.p_end, NULL);
+
+                runtimes[completed] = calculateResponseTime(active_process.p_start, active_process.p_end);
+                completed++;
             }
             else
             {
@@ -278,11 +283,20 @@ void MLFQ_Scheduling()
             gettimeofday(&active_process.p_end, NULL);
 
             num_processes--;
+            runtimes[completed] = calculateResponseTime(active_process.p_start, active_process.p_end);
+            completed++;
         }
     }
     free_queue(&RR_queue);
     free_queue(&FCFS_queue);
-    AverageResponseTime("MLFQ");
+
+    long long total_time = 0;
+    for (int i = 0; i < 4; i++)
+    {
+        total_time += runtimes[i];
+    }
+
+    printf("MLFQ - Average Response Time: %lld us\n", total_time / 4);
 }
 
 int main()
